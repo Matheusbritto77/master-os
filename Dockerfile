@@ -1,23 +1,21 @@
-FROM php:8.0-fpm
-RUN chmod +x ./node_modules/.bin/vite
+# Etapa de construção
+FROM node:18 AS builder
+
+WORKDIR /app
+COPY . /app/
 
 # Instalar dependências
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    zip \
-    git \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql
+RUN npm install
+RUN npm ci
 
-# Instalar Composer
-COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+# Garantir permissões para o Vite
+RUN chmod +x ./node_modules/.bin/vite
 
-WORKDIR /var/www
-COPY . .
+# Construir o projeto
+RUN npm run build
 
-RUN composer install
+# Configurar usuário
+USER root
 
-EXPOSE 9000
-CMD ["php-fpm"]
+# Início do servidor
+CMD ["node", "dist/server.js"]
