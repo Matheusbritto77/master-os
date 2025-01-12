@@ -7,11 +7,11 @@
     Options -MultiViews -Indexes
   </IfModule>
 
-  # Permitir acesso tanto via HTTP quanto HTTPS
+  # Redirecionar todas as requisições HTTP para HTTPS
   RewriteCond %{HTTPS} off
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-  # Manter o Header de autorização
+  # Manter o Header de autorização (para APIs ou autenticação)
   RewriteCond %{HTTP:Authorization} .
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
@@ -20,7 +20,7 @@
   RewriteCond %{REQUEST_URI} (.+)/$
   RewriteRule ^ %1 [L,R=301]
 
-  # Permitir acesso direto ao arquivo download.php quando acessar /download/
+  # Permitir acesso direto ao arquivo download.php ao acessar /download/
   RewriteRule ^download/?$ /download/download.php [L]
 
   # Manipula requisições CORS preflight para /api/*
