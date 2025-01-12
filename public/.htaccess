@@ -11,6 +11,13 @@
   RewriteCond %{HTTPS} off
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+
+  # Reescrever recursos HTTP para HTTPS
+  RewriteCond %{HTTP:REQUEST_URI} ^/(.*)
+  RewriteCond %{THE_REQUEST} .*http://.*
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+
   # Manter o Header de autorização (para APIs ou autenticação)
   RewriteCond %{HTTP:Authorization} .
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
