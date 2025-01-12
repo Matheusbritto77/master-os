@@ -1,8 +1,5 @@
-
-
-# Ignorar diretórios específicos do editor
-/.fleet
-/.idea
-/.vscode
+# Ignore apenas a pasta .vscode e .vs
+.vscode/
 .vs/
 
+#
