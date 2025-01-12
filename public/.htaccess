@@ -1,29 +1,35 @@
-<IfModule mod_rewrite.c>
-    <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
-    </IfModule>
+<IfModule mod_rewrite.c="">
+  # Ativa o módulo de reescrita
+  RewriteEngine On
 
-    RewriteEngine On
+  <IfModule mod_negotiation.c="">
+    # Remove MultiViews e Indexes para evitar problemas de roteamento
+    Options -MultiViews -Indexes
+  </IfModule>
 
-    # Handle Authorization Header
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  # Permitir acesso tanto via HTTP quanto HTTPS
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # Redirect Trailing Slashes If Not A Folder...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_URI} (.+)/$
-    RewriteRule ^ %1 [L,R=301]
+  # Manter o Header de autorização
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Allow access to the download.php file directly when accessing /download/
-    RewriteRule ^download/?$ /download/download.php [L]
+  # Redireciona URLs com barra no final, se não for um diretório
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} (.+)/$
+  RewriteRule ^ %1 [L,R=301]
 
-    # Handle CORS preflight requests for /api/*
-    RewriteCond %{REQUEST_METHOD} OPTIONS
-    RewriteCond %{REQUEST_URI} ^/api/
-    RewriteRule ^(.*)$ $1 [R=204,L]
+  # Permitir acesso direto ao arquivo download.php quando acessar /download/
+  RewriteRule ^download/?$ /download/download.php [L]
 
-    # Send Requests To Front Controller...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+  # Manipula requisições CORS preflight para /api/*
+  RewriteCond %{REQUEST_METHOD} OPTIONS
+  RewriteCond %{REQUEST_URI} ^/api/
+  RewriteRule ^(.*)$ $1 [R=204,L]
+
+  # Redireciona todas as requisições para o Front Controller (index.php)
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [L]
 </IfModule>
