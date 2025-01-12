@@ -2,14 +2,6 @@
   # Ativa o módulo de reescrita
   RewriteEngine On
 
-  <IfModule mod_negotiation.c="">
-    # Remove MultiViews e Indexes para evitar problemas de roteamento
-    Options -MultiViews -Indexes
-  </IfModule>
-
-  # Redirecionar todas as requisições HTTP para HTTPS
-  RewriteCond %{HTTPS} off
-  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 
   # Reescrever recursos HTTP para HTTPS
@@ -22,25 +14,12 @@
 
 
 
-  # Manter o Header de autorização (para APIs ou autenticação)
-  RewriteCond %{HTTP:Authorization} .
-  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+ 
 
-  # Redireciona URLs com barra no final, se não for um diretório
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_URI} (.+)/$
-  RewriteRule ^ %1 [L,R=301]
-
-  # Permitir acesso direto ao arquivo download.php ao acessar /download/
-  RewriteRule ^download/?$ /download/download.php [L]
 
   # Manipula requisições CORS preflight para /api/*
   RewriteCond %{REQUEST_METHOD} OPTIONS
   RewriteCond %{REQUEST_URI} ^/api/
   RewriteRule ^(.*)$ $1 [R=204,L]
 
-  # Redireciona todas as requisições para o Front Controller (index.php)
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteRule ^ index.php [L]
 </IfModule>
