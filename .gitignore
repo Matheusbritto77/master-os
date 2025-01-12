@@ -6,7 +6,3 @@
 /.vscode
 .vs/
 
-# Ignorar diretórios de armazenamento
-/public/storage
-/storage/*.key
-
