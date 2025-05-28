@@ -144,7 +144,7 @@ Route::get('/adicionar-ordem', [OrdensController::class, 'create'])->name('adici
 Route::get('/buscar-cliente', [OrdensController::class, 'buscarCliente'])->name('buscar_cliente');
 Route::get('/clientes/{id}', [OrdensController::class, 'show'])->name('clientes.show');
 Route::post('/adicionar-tecnico', [FuncionarioController::class, 'store'])->name('adicionar_tecnico');
-Route::post('/registrar-atendente', [FuncionarioController::class, 'create'])->name('registrar-atendente');
+Route::any('/registrar-atendente', [FuncionarioController::class, 'create'])->name('registrar-atendente');
 Route::delete('/remover-atendente/{id}', [FuncionarioController::class, 'destroy'])->name('remover-atendente');
 Route::get('/atendentes', [FuncionarioController::class, 'getAtendentes']);
 Route::delete('/remover-tecnico/{id}', [FuncionarioController::class, 'destroyTecnico'])->name('remover-tecnico');
