@@ -4,13 +4,6 @@
 
 
 
-  # Reescrever recursos HTTP para HTTPS
-  RewriteCond %{HTTP:REQUEST_URI} ^/(.*)
-  RewriteCond %{THE_REQUEST} .*http://.*
-  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-  Header always set Content-Security-Policy: upgrade-insecure-requests
-
 
 
 
