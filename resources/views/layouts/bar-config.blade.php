@@ -242,6 +242,115 @@
                 }
             });
         });
+
+       
+document.addEventListener('DOMContentLoaded', function() {
+    // Função para converter URLs de HTTP para HTTPS
+    function convertToHTTPS(url) {
+        if (url && url.startsWith('http:')) {
+            return url.replace('http:', 'https:');
+        }
+        return url;
+    }
+
+    // Converter todos os atributos src e href para HTTPS
+    function fixMixedContent() {
+        // Imagens
+        document.querySelectorAll('img[src^="http:"]').forEach(function(img) {
+            img.src = convertToHTTPS(img.src);
+        });
+
+        // Scripts
+        document.querySelectorAll('script[src^="http:"]').forEach(function(script) {
+            script.src = convertToHTTPS(script.src);
+        });
+
+        // CSS
+        document.querySelectorAll('link[href^="http:"]').forEach(function(link) {
+            link.href = convertToHTTPS(link.href);
+        });
+
+        // Iframes
+        document.querySelectorAll('iframe[src^="http:"]').forEach(function(iframe) {
+            iframe.src = convertToHTTPS(iframe.src);
+        });
+
+        // Audio/Video
+        document.querySelectorAll('audio[src^="http:"], video[src^="http:"]').forEach(function(media) {
+            media.src = convertToHTTPS(media.src);
+        });
+
+        // Sources dentro de picture, video, audio
+        document.querySelectorAll('source[src^="http:"]').forEach(function(source) {
+            source.src = convertToHTTPS(source.src);
+        });
+
+        // Fontes
+        document.querySelectorAll('link[rel="stylesheet"][href^="http:"]').forEach(function(stylesheet) {
+            stylesheet.href = convertToHTTPS(stylesheet.href);
+        });
+
+        // Background images via inline style (limitado)
+        document.querySelectorAll('[style*="http:"]').forEach(function(el) {
+            el.style.cssText = el.style.cssText.replace(/http:/g, 'https:');
+        });
+
+        // Favicon específico
+        document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(function(favicon) {
+            if (favicon.href && favicon.href.startsWith('http:')) {
+                favicon.href = convertToHTTPS(favicon.href);
+            }
+        });
+    }
+
+    // Corrigir conteúdo existente
+    fixMixedContent();
+
+    // Interceptar solicitações futuras (para conteúdo carregado dinamicamente)
+    // Usando MutationObserver para detectar mudanças no DOM
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                // Elementos foram adicionados ao DOM, executar novamente a correção
+                fixMixedContent();
+            }
+        });
+    });
+
+    // Iniciar observação
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
+
+    // Se houver XMLHttpRequest ou fetch usados na página
+    // Reescrever para garantir que usem HTTPS
+    (function() {
+        // Sobrescrever XMLHttpRequest.open
+        const originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+            arguments[1] = convertToHTTPS(url);
+            return originalOpen.apply(this, arguments);
+        };
+
+        // Sobrescrever fetch
+        const originalFetch = window.fetch;
+        window.fetch = function(resource, init) {
+            if (typeof resource === 'string') {
+                resource = convertToHTTPS(resource);
+            } else if (resource instanceof Request) {
+                resource = new Request(
+                    convertToHTTPS(resource.url), 
+                    resource
+                );
+            }
+            return originalFetch.call(this, resource, init);
+        };
+    })();
+
+    console.log('Mixed content protection activated');
+});
+
     </script>
 </body>
 </html>
