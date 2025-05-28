@@ -1,0 +1,10 @@
+# Redirecionar todo tráfego HTTP para HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Adicionar cabeçalho HSTS para forçar HTTPS em futuras visitas
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+# Adicionar cabeçalho CSP para atualizar requisições inseguras
+Header always set Content-Security-Policy "upgrade-insecure-requests"
