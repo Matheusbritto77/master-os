@@ -52,7 +52,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        fetch('registrar-atendente', {
+        // Usar a rota completa com protocolo HTTPS
+        var url = window.location.protocol + '//' + window.location.host + '/registrar-atendente';
+        
+        // Garantir que a URL seja HTTPS
+        url = url.replace('http:', 'https:');
+
+        fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
