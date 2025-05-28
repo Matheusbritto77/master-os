@@ -244,113 +244,130 @@
         });
 
        
-document.addEventListener('DOMContentLoaded', function() {
-    // Função para converter URLs de HTTP para HTTPS
+
+// Meta tag mais Service Worker para cobertura completa
+(function() {
+    // 1. Adicionar meta tag programaticamente
+    const meta = document.createElement('meta');
+    meta.httpEquiv = 'Content-Security-Policy';
+    meta.content = 'upgrade-insecure-requests';
+    document.head.appendChild(meta);
+    
+    // 2. Corrigir elementos existentes
     function convertToHTTPS(url) {
-        if (url && url.startsWith('http:')) {
+        if (url && typeof url === 'string' && url.startsWith('http:')) {
             return url.replace('http:', 'https:');
         }
         return url;
     }
-
-    // Converter todos os atributos src e href para HTTPS
-    function fixMixedContent() {
-        // Imagens
-        document.querySelectorAll('img[src^="http:"]').forEach(function(img) {
-            img.src = convertToHTTPS(img.src);
-        });
-
-        // Scripts
-        document.querySelectorAll('script[src^="http:"]').forEach(function(script) {
-            script.src = convertToHTTPS(script.src);
-        });
-
-        // CSS
-        document.querySelectorAll('link[href^="http:"]').forEach(function(link) {
-            link.href = convertToHTTPS(link.href);
-        });
-
-        // Iframes
-        document.querySelectorAll('iframe[src^="http:"]').forEach(function(iframe) {
-            iframe.src = convertToHTTPS(iframe.src);
-        });
-
-        // Audio/Video
-        document.querySelectorAll('audio[src^="http:"], video[src^="http:"]').forEach(function(media) {
-            media.src = convertToHTTPS(media.src);
-        });
-
-        // Sources dentro de picture, video, audio
-        document.querySelectorAll('source[src^="http:"]').forEach(function(source) {
-            source.src = convertToHTTPS(source.src);
-        });
-
-        // Fontes
-        document.querySelectorAll('link[rel="stylesheet"][href^="http:"]').forEach(function(stylesheet) {
-            stylesheet.href = convertToHTTPS(stylesheet.href);
-        });
-
-        // Background images via inline style (limitado)
-        document.querySelectorAll('[style*="http:"]').forEach(function(el) {
-            el.style.cssText = el.style.cssText.replace(/http:/g, 'https:');
-        });
-
+    
+    // Reescrever URLs de conteúdo misto para elementos existentes
+    const rewriteURL = function(element, attribute) {
+        const elements = document.querySelectorAll(element + '[' + attribute + '^="http:"]');
+        for (let i = 0; i < elements.length; i++) {
+            elements[i][attribute] = convertToHTTPS(elements[i][attribute]);
+        }
+    };
+    
+    const fixExistingElements = function() {
+        rewriteURL('img', 'src');
+        rewriteURL('script', 'src');
+        rewriteURL('link', 'href');
+        rewriteURL('iframe', 'src');
+        rewriteURL('audio', 'src');
+        rewriteURL('video', 'src');
+        rewriteURL('source', 'src');
+        rewriteURL('a', 'href');
+        rewriteURL('form', 'action');
+        
         // Favicon específico
-        document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(function(favicon) {
-            if (favicon.href && favicon.href.startsWith('http:')) {
-                favicon.href = convertToHTTPS(favicon.href);
+        const favicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
+        for (let i = 0; i < favicons.length; i++) {
+            if (favicons[i].href && favicons[i].href.startsWith('http:')) {
+                favicons[i].href = convertToHTTPS(favicons[i].href);
             }
+        }
+        
+        // Estilos inline com url()
+        document.querySelectorAll('[style*="http:"]').forEach(function(el) {
+            if (el.style.cssText) {
+                el.style.cssText = el.style.cssText.replace(/url\(['"]?http:/g, "url('https:");
+            }
+        });
+    };
+    
+    // Executar imediatamente
+    fixExistingElements();
+    
+    // 3. Interceptar requisições AJAX
+    // Sobrescrever XMLHttpRequest
+    const originalOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+        arguments[1] = convertToHTTPS(url);
+        return originalOpen.apply(this, arguments);
+    };
+    
+    // 4. Interceptar fetch API
+    const originalFetch = window.fetch;
+    window.fetch = function(resource, init) {
+        if (typeof resource === 'string') {
+            resource = convertToHTTPS(resource);
+        } else if (resource instanceof Request && resource.url) {
+            resource = new Request(convertToHTTPS(resource.url), resource);
+        }
+        return originalFetch.call(this, resource, init);
+    };
+    
+    // 5. Observar mudanças no DOM para corrigir elementos adicionados dinamicamente
+    if (window.MutationObserver) {
+        const observer = new MutationObserver(function(mutations) {
+            let needsCheck = false;
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                    needsCheck = true;
+                }
+            });
+            
+            if (needsCheck) {
+                fixExistingElements();
+            }
+        });
+        
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
         });
     }
-
-    // Corrigir conteúdo existente
-    fixMixedContent();
-
-    // Interceptar solicitações futuras (para conteúdo carregado dinamicamente)
-    // Usando MutationObserver para detectar mudanças no DOM
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-                // Elementos foram adicionados ao DOM, executar novamente a correção
-                fixMixedContent();
-            }
+    
+    // 6. Registrar Service Worker para máxima cobertura (opcional)
+    if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+        // Criar um Service Worker inline
+        const swCode = `
+            self.addEventListener('fetch', function(event) {
+                const url = new URL(event.request.url);
+                if (url.protocol === 'http:') {
+                    url.protocol = 'https:';
+                    event.respondWith(fetch(new Request(url.toString(), event.request)));
+                }
+            });
+        `;
+        
+        // Criar Blob e URL
+        const blob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(blob);
+        
+        // Registrar Service Worker
+        navigator.serviceWorker.register(swUrl)
+        .catch(function(error) {
+            console.log('Service Worker registration failed:', error);
         });
-    });
+    }
+    
+    console.log('Proteção contra conteúdo misto ativada - todas as solicitações serão atualizadas para HTTPS');
+})();
 
-    // Iniciar observação
-    observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true
-    });
 
-    // Se houver XMLHttpRequest ou fetch usados na página
-    // Reescrever para garantir que usem HTTPS
-    (function() {
-        // Sobrescrever XMLHttpRequest.open
-        const originalOpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
-            arguments[1] = convertToHTTPS(url);
-            return originalOpen.apply(this, arguments);
-        };
-
-        // Sobrescrever fetch
-        const originalFetch = window.fetch;
-        window.fetch = function(resource, init) {
-            if (typeof resource === 'string') {
-                resource = convertToHTTPS(resource);
-            } else if (resource instanceof Request) {
-                resource = new Request(
-                    convertToHTTPS(resource.url), 
-                    resource
-                );
-            }
-            return originalFetch.call(this, resource, init);
-        };
-    })();
-
-    console.log('Mixed content protection activated');
-});
-
+    
     </script>
 </body>
 </html>
