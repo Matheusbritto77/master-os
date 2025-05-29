@@ -14,26 +14,29 @@ RUN apt-get update && apt-get install -y \
     zip unzip git curl libzip-dev libonig-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring zip
 
-# Ativar reescrita no Apache
+# Ativar mod_rewrite do Apache
 RUN a2enmod rewrite
 
 # Configurar Apache para permitir .htaccess
 RUN sed -i 's|AllowOverride None|AllowOverride All|g' /etc/apache2/apache2.conf
 
-# Define o diretório de trabalho do Apache
+# Ajustar DocumentRoot para a pasta "public" do Laravel
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
+# Define diretório de trabalho
 WORKDIR /var/www/html
 
-# Copia dependências instaladas com o Composer
+# Copia vendor da build
 COPY --from=build /app/vendor /var/www/html/vendor
 
-# Copia o restante do projeto para a pasta pública do Apache
+# Copia o restante do projeto para /var/www/html
 COPY . /var/www/html
 
-# Permissões corretas para Laravel
+# Ajusta permissões necessárias
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expõe a porta padrão do Apache
+# Expõe a porta 80 para o Apache
 EXPOSE 80
 
-# Apache já é iniciado automaticamente no container base
+# O Apache inicia automaticamente no container php:apache
