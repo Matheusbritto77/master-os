@@ -1,33 +1,39 @@
 # Etapa 1: Build com Composer
-FROM composer:2 as build
+FROM composer:2 AS build
 
 WORKDIR /app
 
-# Copia apenas os arquivos essenciais para instalar dependências
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-progress --prefer-dist
 
-# Etapa 2: Imagem com PHP
-FROM php:8.2-cli
+# Etapa 2: PHP com Apache
+FROM php:8.2-apache
 
-# Instala extensões necessárias do PHP
+# Instalar extensões necessárias
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip curl git libonig-dev \
+    zip unzip git curl libzip-dev libonig-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring zip
 
-# Define diretório de trabalho
-WORKDIR /var/www
+# Ativar reescrita no Apache
+RUN a2enmod rewrite
 
-# Copia arquivos da build e do projeto
-COPY --from=build /app/vendor /var/www/vendor
-COPY . /var/www
+# Configurar Apache para permitir .htaccess
+RUN sed -i 's|AllowOverride None|AllowOverride All|g' /etc/apache2/apache2.conf
 
-# Permissão para storage e bootstrap
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 775 storage bootstrap/cache
+# Define o diretório de trabalho do Apache
+WORKDIR /var/www/html
 
-# Expõe a porta 80
+# Copia dependências instaladas com o Composer
+COPY --from=build /app/vendor /var/www/html/vendor
+
+# Copia o restante do projeto para a pasta pública do Apache
+COPY . /var/www/html
+
+# Permissões corretas para Laravel
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Expõe a porta padrão do Apache
 EXPOSE 80
 
-# Comando para iniciar o Laravel na porta 80 (serve escutando 0.0.0.0)
-CMD php artisan serve --host=0.0.0.0 --port=80
+# Apache já é iniciado automaticamente no container base
