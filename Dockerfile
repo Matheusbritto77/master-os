@@ -1,12 +1,15 @@
-# Etapa 1: Build com Composer
-FROM composer:2 AS build
+# Etapa 1: Build com Composer usando mesma base PHP 8.2
+FROM php:8.2-cli AS build
+
+# Instala o Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /app
 
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-progress --prefer-dist
 
-# Etapa 2: PHP com Apache
+# Etapa 2: Apache com PHP 8.2
 FROM php:8.2-apache
 
 # Instalar extensões necessárias
@@ -17,26 +20,24 @@ RUN apt-get update && apt-get install -y \
 # Ativar mod_rewrite do Apache
 RUN a2enmod rewrite
 
-# Configurar Apache para permitir .htaccess
+# Permitir .htaccess
 RUN sed -i 's|AllowOverride None|AllowOverride All|g' /etc/apache2/apache2.conf
 
-# Ajustar DocumentRoot para a pasta "public" do Laravel
+# Apontar Apache para a pasta /public
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
-# Define diretório de trabalho
 WORKDIR /var/www/html
 
-# Copia vendor da build
+# Copia dependências do Composer
 COPY --from=build /app/vendor /var/www/html/vendor
 
-# Copia o restante do projeto para /var/www/html
+# Copia código-fonte
 COPY . /var/www/html
 
-# Ajusta permissões necessárias
+# Permissões corretas
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache
 
-# Expõe a porta 80 para o Apache
 EXPOSE 80
 
-# O Apache inicia automaticamente no container php:apache
+# Apache será iniciado automaticamente
