@@ -514,7 +514,45 @@ border-top: 1px solid #808080; /* Borda cinza */
                 });
             }
         });
-    </script> <!--end::OverlayScrollbars Configure--> <!--end::Script-->
+    </script> 
+    <script>
+(function () {
+    // Patch fetch
+    const originalFetch = window.fetch;
+    window.fetch = function (...args) {
+        if (typeof args[0] === 'string' && args[0].startsWith('http://masteros.online')) {
+            args[0] = args[0].replace('http://', 'https://');
+        }
+        return originalFetch.apply(this, args);
+    };
+
+    // Patch XMLHttpRequest
+    const originalOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+        if (typeof url === 'string' && url.startsWith('http://masteros.online')) {
+            url = url.replace('http://', 'https://');
+        }
+        return originalOpen.call(this, method, url, ...rest);
+    };
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const elements = document.querySelectorAll('[src], [href]');
+    elements.forEach(el => {
+        if (el.src && el.src.startsWith('http://masteros.online')) {
+            el.src = el.src.replace('http://', 'https://');
+        }
+        if (el.href && el.href.startsWith('http://masteros.online')) {
+            el.href = el.href.replace('http://', 'https://');
+        }
+    });
+});
+</script>
+
+    
+    
+    <!--end::OverlayScrollbars Configure--> <!--end::Script-->
 </body><!--end::Body-->
 <footer class="app-footer"> <!--begin::To the end-->
             <div class="float-end d-none ">Otimo trabalho!</div> <!--end::To the end--> <!--begin::Copyright--> <strong>
