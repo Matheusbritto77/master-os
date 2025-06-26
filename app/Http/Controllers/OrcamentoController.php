@@ -56,7 +56,7 @@ class OrcamentoController extends Controller
         $orcamento->rua = $request->rua;
         $orcamento->bairro = $request->bairro;
         $orcamento->modelo = $request->modelo;
-        $orcamento->problema = $request->problema;
+        $orcamento->problema_relatado = $request->problema;
         $orcamento->observacoes = $request->observacoes;
         $orcamento->phone_number = $request->phone_number;
         $orcamento->state = $request->state;

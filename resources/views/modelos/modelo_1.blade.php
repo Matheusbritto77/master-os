@@ -224,7 +224,7 @@
             <strong>Modelo:</strong> {{ $ordem->modelo }}
           </div>
           <div>
-            <strong>Serviço a ser realizado:</strong> {{ $ordem->problema }}
+            <strong>Serviço a ser realizado:</strong> {{ $ordem->problema_relatado }}
           </div>
         </div>
 
@@ -234,7 +234,7 @@
         </div>
 
         <div class="signature-block">
-          <div class="signature-line">Assinatura do Cliente</div>
+          <div class="signature-line"></div>
         </div>
 
         <div class="footer">
@@ -293,7 +293,7 @@
             <strong>Modelo:</strong> {{ $ordem->modelo }}
           </div>
           <div>
-            <strong>Serviço a ser realizado:</strong> {{ $ordem->problema }}
+            <strong>Serviço a ser realizado:</strong> {{ $ordem->problema_relatado }}
           </div>
         </div>
 
@@ -303,7 +303,7 @@
         </div>
 
         <div class="signature-block">
-          <div class="signature-line">Assinatura do Cliente</div>
+          <div class="signature-line"></div>
         </div>
 
         <div class="footer">

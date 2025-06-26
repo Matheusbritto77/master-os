@@ -111,11 +111,13 @@ public function index(Request $request)
                                 ->whereDate('created_at', $today)
                                 ->whereNotNull('total_dia')
                                 ->exists();
+                                
+                                
 
             // Define o estado do caixa com base nas verificações
             if (!$valorInicial) {
                 $caixaStatus = 'fechado'; // Se não há valor inicial, o caixa está fechado
-            } elseif (!$totaldia) {
+            } elseif ($valorInicial) {
                 $caixaStatus = 'aberto'; // Se há valor inicial mas não há total caixa, o caixa está aberto
             } else {
                 $caixaStatus = 'fechado'; // Se há valor inicial e total caixa, o caixa está fechado para o dia
