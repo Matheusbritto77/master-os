@@ -71,7 +71,7 @@ class OrdensController extends Controller
         $ordem->rua = $request->rua;
         $ordem->bairro = $request->bairro;
         $ordem->modelo = $request->modelo;
-        $ordem->problema = $request->problema;
+        $ordem->problema_relatado = $request->problema;
         $ordem->observacoes = $request->observacoes;
         $ordem->phone_number = $request->phone_number;
         $ordem->state = $request->state;
