@@ -33,17 +33,14 @@ use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\GerencianetPixController;
 use App\Http\Controllers\FacebookPixelController;
 use App\Http\Controllers\AssasController;
-
 use App\Http\Controllers\RemoteDatabaseController;
-
-
-
-use App\Http\Controllers\Ajustes\PayController;
-
-
 use App\Http\Controllers\OpenAIController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\Revendedor\RevendedorController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\InstanciaController;
+
+use App\Http\Controllers\Ajustes\PayController;
 
 
 
@@ -366,6 +363,50 @@ Route::any('/assas/registrar-cliente/{type}/{type_payment}', [AssasController::c
 
 Route::get('/remote-databases', [RemoteDatabaseController::class, 'listDatabases'])
     ->name('remote-databases.list');
+
+// Rotas para o módulo de Schedules
+Route::get('/schedules', [ScheduleController::class, 'list'])->name('schedules.list');
+Route::get('/schedules/check', [ScheduleController::class, 'processScheduledPosts'])->name('schedules.process');
+Route::get('/schedules/{schedule}', [ScheduleController::class, 'show'])->name('schedules.show');
+Route::post('/schedules', [ScheduleController::class, 'store'])->name('schedules.store');
+Route::put('/schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
+Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+Route::patch('/schedules/{schedule}/toggle-status', [ScheduleController::class, 'toggleStatus'])->name('schedules.toggle-status');
+
+// Rota alternativa para processar agendamentos (sem autenticação para cron jobs)
+Route::get('/process-schedules', function() {
+    Log::info('Rota /process-schedules foi chamada');
+    return response()->json([
+        'success' => true,
+        'message' => 'Processamento de agendamentos iniciado',
+        'timestamp' => now()->toISOString(),
+        'status' => 'running'
+    ]);
+})->name('process.schedules.alternative');
+
+// Rotas para o módulo de Instâncias do WhatsApp
+Route::get('/instancias', [InstanciaController::class, 'index'])->name('instancias.index');
+Route::get('/instancias/create', [InstanciaController::class, 'create'])->name('instancias.create');
+Route::post('/instancias', [InstanciaController::class, 'store'])->name('instancias.store');
+Route::post('/instancias/create', [InstanciaController::class, 'createInstance'])->name('instancias.createInstance');
+Route::get('/instancias/{instancia}', [InstanciaController::class, 'show'])->name('instancias.show');
+Route::get('/instancias/{instancia}/edit', [InstanciaController::class, 'edit'])->name('instancias.edit');
+Route::put('/instancias/{instancia}', [InstanciaController::class, 'update'])->name('instancias.update');
+Route::delete('/instancias/{id}', [InstanciaController::class, 'destroy'])->name('instancias.destroy');
+
+// Rotas para gerenciamento de sessões
+Route::post('/instancias/{id}/start', [InstanciaController::class, 'startSession'])->name('instancias.start');
+Route::post('/instancias/{id}/stop', [InstanciaController::class, 'stopSession'])->name('instancias.stop');
+Route::post('/instancias/{id}/restart', [InstanciaController::class, 'restartSession'])->name('instancias.restart');
+Route::get('/instancias/{id}/status', [InstanciaController::class, 'checkStatus'])->name('instancias.status');
+Route::get('/instancias/{id}/qr', [InstanciaController::class, 'generateQRCode'])->name('instancias.qr');
+
+// Rotas para gerenciamento global de sessões
+Route::get('/instancias/sessions/list', [InstanciaController::class, 'listSessions'])->name('instancias.sessions.list');
+Route::post('/instancias/sessions/terminate-inactive', [InstanciaController::class, 'terminateInactiveSessions'])->name('instancias.sessions.terminate-inactive');
+
+Route::get('/agendamentos', [ScheduleController::class, 'index'])->name('agendamentos.index');
+Route::get('/groups', [ScheduleController::class, 'groups'])->name('schedules.groups');
 
 
 

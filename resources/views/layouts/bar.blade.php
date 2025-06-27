@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Master-OS</title><!--begin::Primary Meta Tags-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="title" content="Master-OS | Unfixed Sidebar">
     <meta name="author" content="ColorlibHQ">
     <meta name="description" content="AdminLTE is a Free Bootstrap 5 Admin Dashboard, 30 example pages using Vanilla JS.">
-    <meta name="keywords" content="bootstrap 5, bootstrap, bootstrap 5 admin dashboard, bootstrap 5 dashboard, bootstrap 5 charts, bootstrap 5 calendar, bootstrap 5 datepicker, bootstrap 5 tables, bootstrap 5 datatable, vanilla js datatable, colorlibhq, colorlibhq dashboard, colorlibhq admin dashboard"><!--end::Primary Meta Tags-->
+    <meta name="keywords" content="bootstrap 5, bootstrap, bootstrap 5 admin dashboard, bootstrap 5 dashboard, bootstrap 5 charts, bootstrap 5 calendar, bootstrap 5 datepicker, bootstrap 5 tables, bootstrap 5 datatable, vanilla js datatable, colorlibhq, colorlibhq dashboard, colorlibhq admin dashboard">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <!--begin::Fonts-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css" integrity="sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q=" crossorigin="anonymous"><!--end::Fonts-->
     <!--begin::Third Party Plugin(OverlayScrollbars)-->
@@ -464,6 +464,36 @@ border-top: 1px solid #808080; /* Borda cinza */
                                 </li>
                             </ul>
                         </li>
+                        <!-- WhatsApp -->
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon bi bi-whatsapp"></i>
+                                <p>
+                                    WhatsApp
+                                    <i class="nav-arrow bi bi-chevron-right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="{{ route('instancias.index') }}" class="nav-link">
+                                        <i class="nav-icon bi bi-circle"></i>
+                                        <p>Instâncias</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="https://web.whatsapp.com" target="_blank" class="nav-link">
+                                        <i class="nav-icon bi bi-circle"></i>
+                                        <p>WhatsApp Web</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('agendamentos.index') }}" class="nav-link">
+                                        <i class="nav-icon bi bi-calendar-event"></i>
+                                        <p>Agendamentos</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -486,10 +516,88 @@ border-top: 1px solid #808080; /* Borda cinza */
     @include('modal.ent_estoque')
     @include('modal.add_ordem')
 
-    </div> <!--end::App Wrapper--> <!--begin::Script--> <!--begin::Third Party Plugin(OverlayScrollbars)-->
+    <!-- Modal Nova Instância WhatsApp -->
+    <div class="modal fade" id="modalNovaInstancia" tabindex="-1" aria-labelledby="modalNovaInstanciaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalNovaInstanciaLabel">
+                        <i class="bi bi-whatsapp"></i> Nova Instância do WhatsApp
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formNovaInstancia" action="{{ route('instancias.create') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Nome da Instância <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="name" 
+                                           name="name" 
+                                           placeholder="Ex: Minha Instância WhatsApp"
+                                           required>
+                                    <div class="form-text">Nome único para identificar esta instância</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="api_endpoint" class="form-label">Endpoint da API <span class="text-danger">*</span></label>
+                                    <input type="url" 
+                                           class="form-control" 
+                                           id="api_endpoint" 
+                                           name="api_endpoint" 
+                                           placeholder="https://api.whatsapp.com"
+                                           required>
+                                    <div class="form-text">URL da API do WhatsApp que você está usando</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="3" 
+                                      placeholder="Descrição opcional sobre esta instância"></textarea>
+                        </div>
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-info-circle"></i> Informações</h6>
+                            <ul class="mb-0">
+                                <li>Após criar a instância, você poderá iniciar uma sessão</li>
+                                <li>Será gerado um QR Code para conectar o WhatsApp</li>
+                                <li>Você pode gerenciar múltiplas instâncias simultaneamente</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Criar Instância
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    </div> <!--end::App Wrapper--> <!--begin::Script--> 
+    <!--begin::jQuery-->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script> <!--end::jQuery-->
+    <!--begin::Third Party Plugin(OverlayScrollbars)-->
     <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.3.0/browser/overlayscrollbars.browser.es6.min.js" integrity="sha256-H2VM7BKda+v2Z4+DRy69uknwxjyDRhszjXFhsL4gD3w=" crossorigin="anonymous"></script> <!--end::Third Party Plugin(OverlayScrollbars)--><!--begin::Required Plugin(popperjs for Bootstrap 5)-->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha256-whL0tQWoY1Ku1iskqPFvmZ+CHsvmRWx/PIoEvIeWh4I=" crossorigin="anonymous"></script> <!--end::Required Plugin(popperjs for Bootstrap 5)--><!--begin::Required Plugin(Bootstrap 5)-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha256-YMa+wAM6QkVyz999odX7lPRxkoYAan8suedu4k2Zur8=" crossorigin="anonymous"></script> <!--end::Required Plugin(Bootstrap 5)--><!--begin::Required Plugin(AdminLTE)-->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/pt-br.js"></script>
+    <script>
+        // Configurar moment.js para português brasileiro
+        moment.locale('pt-br');
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="dist/js/adminlte.js"></script> <!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->
     <script>
@@ -550,9 +658,79 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<!-- Script para Modal Nova Instância -->
+<script>
+$(document).ready(function() {
+    // Validação do formulário de nova instância
+    $('#formNovaInstancia').submit(function(e) {
+        const name = $('#name').val().trim();
+        const endpoint = $('#api_endpoint').val().trim();
+        
+        if (!name) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Erro!',
+                text: 'Por favor, informe o nome da instância.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            $('#name').focus();
+            return false;
+        }
+        
+        if (!endpoint) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Erro!',
+                text: 'Por favor, informe o endpoint da API.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            $('#api_endpoint').focus();
+            return false;
+        }
+        
+        if (!isValidUrl(endpoint)) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Erro!',
+                text: 'Por favor, informe uma URL válida para o endpoint.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            $('#api_endpoint').focus();
+            return false;
+        }
+        
+        // Mostrar loading
+        const submitBtn = $(this).find('button[type="submit"]');
+        submitBtn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Criando...');
+    });
+    
+    function isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+    
+    // Reset do formulário quando o modal for fechado
+    $('#modalNovaInstancia').on('hidden.bs.modal', function() {
+        $('#formNovaInstancia')[0].reset();
+        const submitBtn = $('#formNovaInstancia').find('button[type="submit"]');
+        submitBtn.prop('disabled', false).html('<i class="bi bi-plus-circle"></i> Criar Instância');
+    });
+});
+</script>
+
     
     
     <!--end::OverlayScrollbars Configure--> <!--end::Script-->
+    
+    @stack('scripts')
+    
 </body><!--end::Body-->
 <footer class="app-footer"> <!--begin::To the end-->
             <div class="float-end d-none ">Otimo trabalho!</div> <!--end::To the end--> <!--begin::Copyright--> <strong>

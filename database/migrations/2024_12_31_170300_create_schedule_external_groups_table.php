@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pagamentos', function (Blueprint $table) {
+        Schema::create('schedule_external_groups', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('schedule_id')->constrained()->onDelete('cascade');
+            $table->string('group_id');
             $table->timestamps();
         });
     }
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pagamentos');
+        Schema::dropIfExists('schedule_external_groups');
     }
-};
+}; 
