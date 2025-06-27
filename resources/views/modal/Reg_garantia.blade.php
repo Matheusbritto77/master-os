@@ -92,7 +92,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-garantia">Salvar</button>
                 </div>
             </form>
         </div>
@@ -100,6 +100,7 @@
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
         // Função para buscar clientes e preencher automaticamente os campos
@@ -145,7 +146,11 @@
                 },
                 error: function(xhr, status, error) {
                     console.error('Erro na requisição:', error);
-                    alert('Erro ao buscar clientes. Tente novamente.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: 'Erro ao buscar clientes. Tente novamente.'
+                    });
                 }
             });
         }
@@ -212,6 +217,9 @@
         $('#form-garantia').submit(function(event) {
             event.preventDefault(); // Impede o envio padrão do formulário
 
+            // Desabilitar o botão para evitar múltiplos envios
+            $('#btn-submit-garantia').prop('disabled', true).text('Salvando...');
+
             // Remove o atributo readonly antes de enviar os dados
             $('#cidadeGarantia').removeAttr('readonly');
             $('#phone_numberGarantia').removeAttr('readonly');
@@ -230,17 +238,53 @@
                 type: 'POST',
                 data: dataToSend,
                 success: function(response) {
-                    window.location.href = "{{ route('gerar_pdf_ultima_garantia') }}"; // Redireciona após o salvamento
-                    $('#modalCriarGarantia').modal('hide');
-                    // Limpar os campos do formulário para a próxima entrada
-                    $('#form-garantia')[0].reset();
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: response.message,
+                            showConfirmButton: true
+                        }).then((result) => {
+                            if (response.redirect) {
+                                window.location.href = response.redirect;
+                            }
+                            $('#modalCriarGarantia').modal('hide');
+                            // Limpar os campos do formulário para a próxima entrada
+                            $('#form-garantia')[0].reset();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro!',
+                            text: response.message
+                        });
+                    }
                 },
-                error: function(xhr, status, error) {
-                    // Manipula o erro da requisição
-                    console.error('Erro ao salvar garantia:', error);
-                    alert('Erro ao salvar garantia. Tente novamente.');
+                error: function(xhr) {
+                    let errorMessage = 'Erro interno do servidor.';
+                    
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            // Formata os erros de validação para exibição
+                            const errors = xhr.responseJSON.errors;
+                            const errorList = Object.values(errors).flat().map(error => `• ${error}`).join('<br>');
+                            errorMessage = `Erro de validação:<br>${errorList}`;
+                        } else if (xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        html: errorMessage,
+                        confirmButtonText: 'OK'
+                    });
                 },
                 complete: function() {
+                    // Reabilitar o botão
+                    $('#btn-submit-garantia').prop('disabled', false).text('Salvar');
+                    
                     // Adiciona o atributo readonly novamente após o envio
                     $('#cidadeGarantia').attr('readonly', true);
                     $('#phone_numberGarantia').attr('readonly', true);

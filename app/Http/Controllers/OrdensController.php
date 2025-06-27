@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Cliente;
 use App\Models\Ordem;
+use App\Models\Empresa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Funcionario;
+use Illuminate\Support\Facades\Validator;
 
 class OrdensController extends Controller
 {
@@ -57,37 +59,93 @@ class OrdensController extends Controller
      * Armazena uma nova ordem de serviço para o usuário autenticado.
      *
      * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-        // Criar uma nova ordem
-        $ordem = new Ordem();
-        
-        // Preencher os campos com os dados do request
-        $ordem->cliente = $request->cliente;
-        $ordem->cidade = $request->cidade;
-        $ordem->cep = $request->cep;
-        $ordem->rua = $request->rua;
-        $ordem->bairro = $request->bairro;
-        $ordem->modelo = $request->modelo;
-        $ordem->problema = $request->problema;
-        $ordem->observacoes = $request->observacoes;
-        $ordem->phone_number = $request->phone_number;
-        $ordem->state = $request->state;
-        
-        // Aqui, você pode obter os nomes do técnico e do atendente a partir dos seus IDs
-        $tecnico = Funcionario::find($request->tecnico);
-        $atendente = Funcionario::find($request->atendente);
-        
-        // Verifique se os técnicos e atendentes foram encontrados
-        if ($tecnico && $atendente) {
-            // Preencha os nomes do técnico e do atendente na ordem
+        try {
+            // Verificar se o usuário tem dados de empresa cadastrados
+            $empresa = Empresa::where('user_id', Auth::id())->first();
+            
+            if (!$empresa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dados da empresa não encontrados. Por favor, vá em Configurações > Empresa e cadastre os dados da sua empresa antes de criar uma ordem de serviço.',
+                    'redirect' => route('config.empresa')
+                ], 422);
+            }
+
+            // Validação dos dados
+            $validator = Validator::make($request->all(), [
+                'cliente' => 'required|string|max:255',
+                'cidade' => 'required|string|max:255',
+                'cep' => 'required|string|max:10',
+                'rua' => 'required|string|max:255',
+                'bairro' => 'required|string|max:255',
+                'modelo' => 'required|string|max:255',
+                'problema' => 'required|string',
+                'observacoes' => 'nullable|string',
+                'phone_number' => 'required|string|max:20',
+                'state' => 'required|string|max:255',
+                'numero' => 'required|string|max:10',
+                'tecnico' => 'required|exists:funcionarios,id',
+                'atendente' => 'required|exists:funcionarios,id',
+            ], [
+                'cliente.required' => 'O nome do cliente é obrigatório.',
+                'cidade.required' => 'A cidade é obrigatória.',
+                'cep.required' => 'O CEP é obrigatório.',
+                'rua.required' => 'A rua é obrigatória.',
+                'bairro.required' => 'O bairro é obrigatório.',
+                'modelo.required' => 'O modelo do equipamento é obrigatório.',
+                'problema.required' => 'O problema relatado é obrigatório.',
+                'phone_number.required' => 'O telefone é obrigatório.',
+                'state.required' => 'O estado é obrigatório.',
+                'numero.required' => 'O número é obrigatório.',
+                'tecnico.required' => 'O técnico é obrigatório.',
+                'tecnico.exists' => 'O técnico selecionado não existe.',
+                'atendente.required' => 'O atendente é obrigatório.',
+                'atendente.exists' => 'O atendente selecionado não existe.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro de validação',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Criar uma nova ordem
+            $ordem = new Ordem();
+            
+            // Preencher os campos com os dados do request
+            $ordem->cliente = $request->cliente;
+            $ordem->cidade = $request->cidade;
+            $ordem->cep = $request->cep;
+            $ordem->rua = $request->rua;
+            $ordem->bairro = $request->bairro;
+            $ordem->modelo = $request->modelo;
+            $ordem->problema_relatado = $request->problema;
+            $ordem->observacoes = $request->observacoes;
+            $ordem->phone_number = $request->phone_number;
+            $ordem->state = $request->state;
+            $ordem->numero = $request->numero;
+            
+            // Obter os nomes do técnico e do atendente a partir dos seus IDs
+            $tecnico = Funcionario::find($request->tecnico);
+            $atendente = Funcionario::find($request->atendente);
+            
+            // Verificar se os técnicos e atendentes foram encontrados
+            if (!$tecnico || !$atendente) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Técnico ou atendente não encontrado. Por favor, verifique se eles estão cadastrados no sistema.'
+                ], 422);
+            }
+
+            // Preencher os nomes do técnico e do atendente na ordem
             $ordem->tecnico = $tecnico->tecnico;
             $ordem->atendente = $atendente->atendente;
-            
-            // Preencha os demais campos
-            $ordem->numero = $request->numero;
 
             // Associar a ordem ao usuário autenticado
             $ordem->user_id = Auth::id();
@@ -95,11 +153,17 @@ class OrdensController extends Controller
             // Salvar a ordem de serviço
             $ordem->save();
 
-            // Redirecionar de volta à página de listagem de ordens de serviço com uma mensagem de sucesso
-            return redirect()->route('gerarPDFUltima');
-        } else {
-            // Se um técnico ou atendente não foi encontrado, retorne um erro
-            return redirect()->back()->with('error', 'Técnico ou atendente não encontrado.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Ordem de serviço criada com sucesso!',
+                'redirect' => route('gerarPDFUltima')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno do servidor: ' . $e->getMessage()
+            ], 500);
         }
     }
 

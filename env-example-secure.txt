@@ -1,0 +1,30 @@
+# =============================================================================
+# CONFIGURAÇÕES DE SEGURANÇA HTTPS
+# =============================================================================
+
+# Ambiente da aplicação
+APP_ENV=production
+
+# Força HTTPS (true para produção, false para desenvolvimento)
+FORCE_HTTPS=true
+
+# Cookies seguros (true para produção, false para desenvolvimento)
+SECURE_COOKIES=true
+SESSION_SECURE_COOKIE=true
+
+# HSTS (HTTP Strict Transport Security) - Apenas para produção
+HSTS_ENABLED=true
+HSTS_MAX_AGE=31536000
+HSTS_INCLUDE_SUBDOMAINS=true
+HSTS_PRELOAD=false
+
+# =============================================================================
+# CONFIGURAÇÕES PARA DESENVOLVIMENTO
+# =============================================================================
+
+# Para desenvolvimento local, use:
+# APP_ENV=local
+# FORCE_HTTPS=false
+# SECURE_COOKIES=false
+# SESSION_SECURE_COOKIE=false
+# HSTS_ENABLED=false 

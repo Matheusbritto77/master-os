@@ -3,7 +3,7 @@
 @section('content')
 <div class="container">
     <h2 class="text-center my-4">Adicionar Ordem de Serviço</h2>
-    <form id="form-ordem" action="{{ route('ordens.store') }}" method="POST">
+    <form id="form-ordem" action="{{ route('adicionarordem') }}" method="POST">
         @csrf <!-- Diretiva Blade para gerar token CSRF -->
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -13,7 +13,7 @@
                         <div class="col-md-6">
                             <div class="form-group position-relative">
                                 <label for="cliente">Cliente:</label>
-                                <input type="text" id="cliente" class="form-control" placeholder="Pesquisar ou selecionar cliente">
+                                <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Pesquisar ou selecionar cliente">
                                 <div id="lista-clientes" class="list-group position-absolute w-100" style="display: none; z-index: 1000;"></div>
                             </div>
                         </div>
@@ -113,16 +113,15 @@
                 </fieldset>
 
                 <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit">Salvar</button>
                 </div>
             </div>
         </div>
     </form>
 </div>
 
-
-
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
         const searchInput = $('#cliente');
@@ -178,41 +177,50 @@
                 },
                 error: function(xhr, status, error) {
                     console.error('Erro na requisição:', error);
-                    alert('Erro ao buscar clientes. Tente novamente.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: 'Erro ao buscar clientes. Tente novamente.'
+                    });
                 }
             });
         }
 
-
         function fetchTecnicos() {
-    $.get('get-tecnicos', function(data) {
-        const tecnicoSelect = $('#tecnico');
-        tecnicoSelect.empty();
-        tecnicoSelect.append('<option value="">Selecione o Técnico</option>');
-        $.each(data, function(id, name) {
-            tecnicoSelect.append($('<option></option>').attr('value', id).text(name));
-        });
-    }).fail(function(xhr, status, error) {
-        console.error('Erro na requisição:', error);
-        alert('Erro ao buscar técnicos. Tente novamente.');
-    });
-}
+            $.get('get-tecnicos', function(data) {
+                const tecnicoSelect = $('#tecnico');
+                tecnicoSelect.empty();
+                tecnicoSelect.append('<option value="">Selecione o Técnico</option>');
+                $.each(data, function(id, name) {
+                    tecnicoSelect.append($('<option></option>').attr('value', id).text(name));
+                });
+            }).fail(function(xhr, status, error) {
+                console.error('Erro na requisição:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'Erro ao buscar técnicos. Tente novamente.'
+                });
+            });
+        }
 
-function fetchAtendentes() {
-    $.get('get-atendentes', function(data) {
-        const atendenteSelect = $('#atendente');
-        atendenteSelect.empty();
-        atendenteSelect.append('<option value="">Selecione o Atendente</option>');
-        $.each(data, function(id, name) {
-            atendenteSelect.append($('<option></option>').attr('value', id).text(name));
-        });
-    }).fail(function(xhr, status, error) {
-        console.error('Erro na requisição:', error);
-        alert('Erro ao buscar atendentes. Tente novamente.');
-    });
-}
-
-
+        function fetchAtendentes() {
+            $.get('get-atendentes', function(data) {
+                const atendenteSelect = $('#atendente');
+                atendenteSelect.empty();
+                atendenteSelect.append('<option value="">Selecione o Atendente</option>');
+                $.each(data, function(id, name) {
+                    atendenteSelect.append($('<option></option>').attr('value', id).text(name));
+                });
+            }).fail(function(xhr, status, error) {
+                console.error('Erro na requisição:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'Erro ao buscar atendentes. Tente novamente.'
+                });
+            });
+        }
 
         const debouncedFetchClients = debounce(fetchClients, 300);
 
@@ -231,66 +239,83 @@ function fetchAtendentes() {
             }
         });
 
-
-        $('form#form-ordem').submit(function() {
-            $('<input>').attr({
-                type: 'hidden',
-                id: 'cliente_hidden',
-                name: 'cliente',
-                value: $('#cliente').val()
-            }).appendTo('form#form-ordem');
-
-            $('<input>').attr({
-                type: 'hidden',
-                id: 'cidade_hidden',
-                name: 'cidade',
-                value: $('#city').val()
-            }).appendTo('form#form-ordem');
-
-            $('<input>').attr({
-                type: 'hidden',
-                id: 'state_hidden',
-                name: 'state',
-                value: $('#state').val()
-            }).appendTo('form#form-ordem');
-
-            $('<input>').attr({
-                type: 'hidden',
-                id: 'phone_number_hidden',
-                name: 'phone_number',
-                value: $('#phone_number').val()
-            }).appendTo('form#form-ordem');
-
-            $('<input>').attr({
-                type: 'hidden',
-                id: 'cep_hidden',
-                name: 'cep',
-                value: $('#cep').val()
-            }).appendTo('form#form-ordem');
-
-            $('<input>').attr({
-                type: 'hidden',
-                id: 'rua_hidden',
-                name: 'rua',
-                value: $('#street').val()
-            }).appendTo('form#form-ordem');
-
-            $('<input>').attr({
-                type: 'hidden',
-                id: 'bairro_hidden',
-                name: 'bairro',
-                value: $('#neighborhood').val()
-            }).appendTo('form#form-ordem');
-
-            $('<input>').attr({
-                type: 'hidden',
-                id: 'numero_hidden',
-                name: 'numero',
-                value: $('#house_number').val()
-            }).appendTo('form#form-ordem');
+        // Interceptar o envio do formulário para usar AJAX
+        $('form#form-ordem').submit(function(e) {
+            e.preventDefault();
             
-            return true;
+            // Desabilitar o botão para evitar múltiplos envios
+            $('#btn-submit').prop('disabled', true).text('Salvando...');
+
+            // Preparar os dados do formulário
+            const formData = new FormData(this);
+            
+            // Adicionar campos que podem estar faltando
+            formData.set('cliente', $('#cliente').val());
+            formData.set('cidade', $('#city').val());
+            formData.set('state', $('#state').val());
+            formData.set('phone_number', $('#phone_number').val());
+            formData.set('cep', $('#cep').val());
+            formData.set('rua', $('#street').val());
+            formData.set('bairro', $('#neighborhood').val());
+            formData.set('numero', $('#house_number').val());
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: response.message,
+                            showConfirmButton: true
+                        }).then((result) => {
+                            if (response.redirect) {
+                                window.location.href = response.redirect;
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro!',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Erro interno do servidor.';
+                    
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            // Formata os erros de validação para exibição
+                            const errors = xhr.responseJSON.errors;
+                            const errorList = Object.values(errors).flat().map(error => `• ${error}`).join('<br>');
+                            errorMessage = `Erro de validação:<br>${errorList}`;
+                        } else if (xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        html: errorMessage,
+                        confirmButtonText: 'OK'
+                    });
+                },
+                complete: function() {
+                    // Reabilitar o botão
+                    $('#btn-submit').prop('disabled', false).text('Salvar');
+                }
+            });
         });
+
+        // Fetch técnicos e atendentes ao carregar a página
+        fetchTecnicos();
+        fetchAtendentes();
     });
 </script>
 

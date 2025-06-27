@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Garantia;
+use App\Models\Empresa;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -44,36 +45,67 @@ class GarantiaController extends Controller
      * Armazena uma nova garantia no banco de dados.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-        // Valida os dados recebidos
-        $validator = Validator::make($request->all(), [
-            'name' => 'nullable|string|max:255',
-            'email' => 'nullable|string|max:255',
-            'phone_number' => 'nullable|string|max:255',
-            'cep' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'neighborhood' => 'nullable|string|max:255',
-            'street' => 'nullable|string|max:255',
-            'house_number' => 'nullable|string|max:255',
-            'state' => 'nullable|string|max:255',
-            'tipoGarantia' => 'nullable|string|max:255',
-            'nomeProduto' => 'nullable|string|max:255',
-            'tempoGarantiaProduto' => 'nullable|string|max:255',
-            'servicoRealizado' => 'nullable|string|max:255',
-            'modeloAparelho' => 'nullable|string|max:255',
-            'tempoGarantiaServico' => 'nullable|string|max:255',
-            'observacoes' => 'nullable|string|max:255',
-        ]);
-
-        // Se a validação falhar, retorna os erros
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         try {
+            // Verificar se o usuário tem dados de empresa cadastrados
+            $empresa = Empresa::where('user_id', Auth::id())->first();
+            
+            if (!$empresa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dados da empresa não encontrados. Por favor, vá em Configurações > Empresa e cadastre os dados da sua empresa antes de criar uma garantia.',
+                    'redirect' => route('config.empresa')
+                ], 422);
+            }
+
+            // Validação dos dados recebidos
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'phone_number' => 'required|string|max:255',
+                'cep' => 'required|string|max:255',
+                'city' => 'required|string|max:255',
+                'neighborhood' => 'required|string|max:255',
+                'street' => 'required|string|max:255',
+                'house_number' => 'required|string|max:255',
+                'state' => 'required|string|max:255',
+                'tipoGarantia' => 'required|string|max:255',
+                'nomeProduto' => 'required|string|max:255',
+                'tempoGarantiaProduto' => 'required|string|max:255',
+                'servicoRealizado' => 'required|string|max:255',
+                'modeloAparelho' => 'required|string|max:255',
+                'tempoGarantiaServico' => 'required|string|max:255',
+                'observacoes' => 'nullable|string|max:255',
+            ], [
+                'name.required' => 'O nome do cliente é obrigatório.',
+                'phone_number.required' => 'O telefone é obrigatório.',
+                'cep.required' => 'O CEP é obrigatório.',
+                'city.required' => 'A cidade é obrigatória.',
+                'neighborhood.required' => 'O bairro é obrigatório.',
+                'street.required' => 'A rua é obrigatória.',
+                'house_number.required' => 'O número é obrigatório.',
+                'state.required' => 'O estado é obrigatório.',
+                'tipoGarantia.required' => 'O tipo de garantia é obrigatório.',
+                'nomeProduto.required' => 'O nome do produto é obrigatório.',
+                'tempoGarantiaProduto.required' => 'O tempo de garantia do produto é obrigatório.',
+                'servicoRealizado.required' => 'O serviço realizado é obrigatório.',
+                'modeloAparelho.required' => 'O modelo do aparelho é obrigatório.',
+                'tempoGarantiaServico.required' => 'O tempo de garantia do serviço é obrigatório.',
+                'email.email' => 'O email deve ser válido.',
+            ]);
+
+            // Se a validação falhar, retorna os erros
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro de validação',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
             // Adiciona o user_id aos dados antes de criar a garantia
             $data = $validator->validated();
             $data['user_id'] = Auth::id();
@@ -81,11 +113,17 @@ class GarantiaController extends Controller
             // Cria uma nova garantia com os dados validados
             Garantia::create($data);
 
-            // Redireciona de volta à página de listagem de garantias com uma mensagem de sucesso
-            return redirect()->route('gerar_pdf_ultima_garantia');
+            return response()->json([
+                'success' => true,
+                'message' => 'Garantia criada com sucesso!',
+                'redirect' => route('gerar_pdf_ultima_garantia')
+            ]);
+
         } catch (\Exception $e) {
-            // Retorna uma resposta de erro em caso de falha na criação da garantia
-            return response()->json(['error' => 'Erro ao criar a garantia: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno do servidor: ' . $e->getMessage()
+            ], 500);
         }
     }
 

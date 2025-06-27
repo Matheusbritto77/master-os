@@ -9,8 +9,8 @@
                 <div class="card-header bg-secondary">Registro de Empresa</div>
 
                 <div class="card-body">
-                    <!-- Formulário com POST tradicional -->
-                    <form method="POST" action="{{ route('empresa.store') }}">
+                    <!-- Formulário com AJAX -->
+                    <form id="form-empresa" method="POST">
                         @csrf
 
                         <div class="form-row">
@@ -76,7 +76,7 @@
                         </div>
 
                         <div class="form-group mt-4">
-                            <button type="submit" class="btn btn-primary btn-block">Registrar Empresa</button>
+                            <button type="submit" id="btn-submit-empresa" class="btn btn-primary btn-block">Registrar Empresa</button>
                         </div>
                     </form>
                 </div>
@@ -110,21 +110,76 @@
             });
         });
 
-        // Exibe alertas com SweetAlert baseado nas mensagens de sessão
-        @if (session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Sucesso',
-                text: '{{ session('success') }}',
-                confirmButtonText: 'OK'
+        // Manipulação do formulário via AJAX
+        $('#form-empresa').submit(function(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            // Desabilitar o botão para evitar múltiplos envios
+            $('#btn-submit-empresa').prop('disabled', true).text('Salvando...');
+
+            // Coleta dos dados do formulário
+            const formData = {
+                _token: $('input[name="_token"]').val(),
+                nome: $('#nome').val(),
+                telefone: $('#telefone').val(),
+                cep: $('#cep').val(),
+                bairro: $('#bairro').val(),
+                rua: $('#rua').val(),
+                cidade: $('#cidade').val(),
+                estado: $('#estado').val()
+            };
+
+            // Realiza a requisição AJAX
+            $.ajax({
+                url: "{{ route('empresa.store') }}",
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: response.success,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            // Recarrega a página para mostrar os dados atualizados
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro!',
+                            text: response.message || 'Erro ao salvar dados da empresa.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Erro interno do servidor.';
+                    
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            // Formata os erros de validação para exibição
+                            const errors = xhr.responseJSON.errors;
+                            const errorList = Object.values(errors).flat().map(error => `• ${error}`).join('<br>');
+                            errorMessage = `Erro de validação:<br>${errorList}`;
+                        } else if (xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        html: errorMessage,
+                        confirmButtonText: 'OK'
+                    });
+                },
+                complete: function() {
+                    // Reabilitar o botão
+                    $('#btn-submit-empresa').prop('disabled', false).text('Registrar Empresa');
+                }
             });
-        @elseif (session('error'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Erro',
-                text: '{{ session('error') }}',
-                confirmButtonText: 'OK'
-            });
-        @endif
+        });
     });
 </script>

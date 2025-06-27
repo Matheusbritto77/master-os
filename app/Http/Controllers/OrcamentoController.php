@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Orcamento;
+use App\Models\Empresa;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\PdfController;
 use App\Models\Funcionario;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Validator;
 
 class OrcamentoController extends Controller
 
@@ -31,48 +33,97 @@ class OrcamentoController extends Controller
         return view('add_orcamento', compact('tecnicos', 'atendentes'));
     }
 
-   
-
-
-
-
-
-
-/**
+    /**
      * Armazena uma nova orcamento de serviço para o usuário autenticado.
      *
      * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createorcamento(Request $request)
     {
-        // Criar uma nova orcamento
-        $orcamento = new Orcamento();
-        
-        // Preencher os campos com os dados do request
-        $orcamento->cliente = $request->cliente;
-        $orcamento->cidade = $request->cidade;
-        $orcamento->cep = $request->cep;
-        $orcamento->rua = $request->rua;
-        $orcamento->bairro = $request->bairro;
-        $orcamento->modelo = $request->modelo;
-        $orcamento->problema = $request->problema;
-        $orcamento->observacoes = $request->observacoes;
-        $orcamento->phone_number = $request->phone_number;
-        $orcamento->state = $request->state;
-        
-        // Aqui, você pode obter os nomes do técnico e do atendente a partir dos seus IDs
-        $tecnico = Funcionario::find($request->tecnico);
-        $atendente = Funcionario::find($request->atendente);
-        
-        // Verifique se os técnicos e atendentes foram encontrados
-        if ($tecnico && $atendente) {
-            // Preencha os nomes do técnico e do atendente na orcamento
+        try {
+            // Verificar se o usuário tem dados de empresa cadastrados
+            $empresa = Empresa::where('user_id', Auth::id())->first();
+            
+            if (!$empresa) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dados da empresa não encontrados. Por favor, vá em Configurações > Empresa e cadastre os dados da sua empresa antes de criar um orçamento.',
+                    'redirect' => route('config.empresa')
+                ], 422);
+            }
+
+            // Validação dos dados
+            $validator = Validator::make($request->all(), [
+                'cliente' => 'required|string|max:255',
+                'cidade' => 'required|string|max:255',
+                'cep' => 'required|string|max:10',
+                'rua' => 'required|string|max:255',
+                'bairro' => 'required|string|max:255',
+                'modelo' => 'required|string|max:255',
+                'problema' => 'required|string',
+                'observacoes' => 'nullable|string',
+                'phone_number' => 'required|string|max:20',
+                'state' => 'required|string|max:255',
+                'numero' => 'required|string|max:10',
+                'tecnico' => 'required|exists:funcionarios,id',
+                'atendente' => 'required|exists:funcionarios,id',
+            ], [
+                'cliente.required' => 'O nome do cliente é obrigatório.',
+                'cidade.required' => 'A cidade é obrigatória.',
+                'cep.required' => 'O CEP é obrigatório.',
+                'rua.required' => 'A rua é obrigatória.',
+                'bairro.required' => 'O bairro é obrigatório.',
+                'modelo.required' => 'O modelo do equipamento é obrigatório.',
+                'problema.required' => 'O problema relatado é obrigatório.',
+                'phone_number.required' => 'O telefone é obrigatório.',
+                'state.required' => 'O estado é obrigatório.',
+                'numero.required' => 'O número é obrigatório.',
+                'tecnico.required' => 'O técnico é obrigatório.',
+                'tecnico.exists' => 'O técnico selecionado não existe.',
+                'atendente.required' => 'O atendente é obrigatório.',
+                'atendente.exists' => 'O atendente selecionado não existe.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro de validação',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Criar uma nova orcamento
+            $orcamento = new Orcamento();
+            
+            // Preencher os campos com os dados do request
+            $orcamento->cliente = $request->cliente;
+            $orcamento->cidade = $request->cidade;
+            $orcamento->cep = $request->cep;
+            $orcamento->rua = $request->rua;
+            $orcamento->bairro = $request->bairro;
+            $orcamento->modelo = $request->modelo;
+            $orcamento->problema_relatado = $request->problema;
+            $orcamento->observacoes = $request->observacoes;
+            $orcamento->phone_number = $request->phone_number;
+            $orcamento->state = $request->state;
+            $orcamento->numero = $request->numero;
+            
+            // Obter os nomes do técnico e do atendente a partir dos seus IDs
+            $tecnico = Funcionario::find($request->tecnico);
+            $atendente = Funcionario::find($request->atendente);
+            
+            // Verificar se os técnicos e atendentes foram encontrados
+            if (!$tecnico || !$atendente) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Técnico ou atendente não encontrado. Por favor, verifique se eles estão cadastrados no sistema.'
+                ], 422);
+            }
+
+            // Preencher os nomes do técnico e do atendente na orcamento
             $orcamento->tecnico = $tecnico->tecnico;
             $orcamento->atendente = $atendente->atendente;
-            
-            // Preencha os demais campos
-            $orcamento->numero = $request->numero;
 
             // Associar a orcamento ao usuário autenticado
             $orcamento->user_id = Auth::id();
@@ -80,21 +131,19 @@ class OrcamentoController extends Controller
             // Salvar a orcamento de serviço
             $orcamento->save();
 
-            // Redirecionar de volta à página de listagem de ordens de serviço com uma mensagem de sucesso
-            return redirect()->route('gerarPDFUltimoOrcamento');
-        } else {
-            // Se um técnico ou atendente não foi encontrado, retorne um erro
-            return redirect()->back()->with('error', 'Técnico ou atendente não encontrado.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Orçamento criado com sucesso!',
+                'redirect' => route('gerarPDFUltimoOrcamento')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno do servidor: ' . $e->getMessage()
+            ], 500);
         }
     }
-
-
-
-
-
-
-
-
 
     /**
      * Exibe o histórico de orçamentos do usuário autenticado.

@@ -141,6 +141,7 @@ Route::get('/clientes/search', [ClienteController::class, 'search'])->name('clie
 Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
 Route::post('/ordens', [OrdensController::class, 'store'])->name('ordens.store');
 Route::get('/adicionar-ordem', [OrdensController::class, 'create'])->name('adicionar_ordem');
+Route::post('/adicionar-ordem', [OrdensController::class, 'store'])->name('adicionarordem');
 Route::get('/buscar-cliente', [OrdensController::class, 'buscarCliente'])->name('buscar_cliente');
 Route::get('/clientes/{id}', [OrdensController::class, 'show'])->name('clientes.show');
 Route::post('/adicionar-tecnico', [FuncionarioController::class, 'store'])->name('adicionar_tecnico');
